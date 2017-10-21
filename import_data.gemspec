@@ -13,4 +13,6 @@ Gem::Specification.new do |s|
     "lib/import_data/railtie.rb",
     "lib/tasks/importation_generate.rake"
   ]
+
+  s.add_dependency "activesupport"
 end
