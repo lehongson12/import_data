@@ -1,2 +1,1 @@
-module ImportData
-end
+require "import_data/railtie" if defined?(Rails)
