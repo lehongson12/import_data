@@ -1,4 +1,5 @@
 require "import_data/railtie" if defined?(Rails)
+require 'csv'
 
 module ImportData
   extend ActiveSupport::Concern
@@ -6,31 +7,28 @@ module ImportData
   class_methods do
     def import_data csv_path, number_of_rows: 20, validation: true
       results = {success: [], error: []}
-      serialized_columns = self.serialized_attributes
+      # serialized_columns = self.serialized_attributes
 
       index = 0
       records = []
 
       ActiveRecord::Base.transaction do
-        CSV.foreach(file_path, headers: true) do |row|
+        CSV.foreach(csv_path, headers: true) do |row|
           begin
-            data = get_data_from_row_to_hash row, serialized_columns
-            id = data.delete "id"
-
-            record = self.new data
+            record = self.new row.to_hash
+            # record.attributes = row.to_hash
             # action = record.new_record? ? :create : :update
             # continue action update on ver2
-            index += 1
             records << record
-            next if index < number_of_rows
+            next if records.size < number_of_rows
+            self.import records, validate: validation
+            records.clear
           rescue ActiveRecord::RecordNotUnique => e
             error = e.message.to_s
             report_error(action, error, index)
             next
           end
         end
-
-        importer = self.import records, validate: validation
       end
 
       results
